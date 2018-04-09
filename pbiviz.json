@@ -1,0 +1,31 @@
+{
+  "visual": {
+    "name": "jQueryPOC",
+    "displayName": "JQueryPOC",
+    "guid": "jQueryPOCBEE1DEBC061B4D99B73AF02818555FAA",
+    "visualClassName": "Visual",
+    "version": "1.0.0",
+    "description": "",
+    "supportUrl": "",
+    "gitHubUrl": ""
+  },
+  "apiVersion": "1.11.0",
+  "author": {
+    "name": "",
+    "email": ""
+  },
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "externalJS": [
+    "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.js",
+    "node_modules/jquery/dist/jquery.js",
+    "JQueryAdapt/jQueryAdapter.js",
+    "node_modules/bootstrap/dist/js/bootstrap.js",
+    "node_modules/d3/dist/d3.js"
+  ],
+  "style": "style/visual.less",
+  "capabilities": "capabilities.json",
+  "dependencies": "dependencies.json",
+  "stringResources": []
+}
