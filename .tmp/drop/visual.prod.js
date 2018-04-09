@@ -14848,6 +14848,38 @@ var powerbi;
         (function (visual) {
             var jQueryPOCBEE1DEBC061B4D99B73AF02818555FAA;
             (function (jQueryPOCBEE1DEBC061B4D99B73AF02818555FAA) {
+                function visualTransform(options, host) {
+                    var dataViews = options.dataViews;
+                    var viewModel = {
+                        dataPoints: [],
+                        dataMax: 0
+                    };
+                    if (!dataViews
+                        || !dataViews[0]
+                        || !dataViews[0].categorical
+                        || !dataViews[0].categorical.categories
+                        || !dataViews[0].categorical.categories[0].source
+                        || !dataViews[0].categorical.values)
+                        return viewModel;
+                    var categorical = dataViews[0].categorical;
+                    var category = categorical.categories[0];
+                    var dataValue = categorical.values[0];
+                    var barChartDataPoints = [];
+                    var dataMax;
+                    var colorPalette = host.colorPalette;
+                    for (var i = 0, len = Math.max(category.values.length, dataValue.values.length); i < len; i++) {
+                        barChartDataPoints.push({
+                            category: category.values[i],
+                            value: dataValue.values[i],
+                            color: colorPalette.getColor(category.values[i]).value
+                        });
+                    }
+                    dataMax = dataValue.maxLocal;
+                    return {
+                        dataPoints: barChartDataPoints,
+                        dataMax: dataMax
+                    };
+                }
                 var Visual = (function () {
                     function Visual(options) {
                         // this.updateCountContainer = $('<div>');
@@ -14887,32 +14919,7 @@ var powerbi;
                         // if (typeof this.textNode !== "undefined") {
                         //     this.textNode.textContent = (this.updateCount++).toString();
                         // }
-                        var testData = [
-                            {
-                                value: 10,
-                                category: 'a'
-                            },
-                            {
-                                value: 20,
-                                category: 'b'
-                            },
-                            {
-                                value: 1,
-                                category: 'c'
-                            },
-                            {
-                                value: 100,
-                                category: 'd'
-                            },
-                            {
-                                value: 500,
-                                category: 'e'
-                            }
-                        ];
-                        var viewModel = {
-                            dataPoints: testData,
-                            dataMax: d3.max(testData.map(function (dataPoint) { return dataPoint.value; }))
-                        };
+                        var viewModel = visualTransform(options, this.host);
                         var width = options.viewport.width;
                         var height = options.viewport.height;
                         this.svg.attr({
@@ -14933,7 +14940,8 @@ var powerbi;
                             width: xScale.rangeBand(),
                             height: function (d) { return height - yScale(d.value); },
                             y: function (d) { return yScale(d.value); },
-                            x: function (d) { return xScale(d.category); }
+                            x: function (d) { return xScale(d.category); },
+                            fill: function (d) { return d.color; }
                         });
                         bars.exit().remove();
                     };

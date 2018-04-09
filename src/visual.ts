@@ -11,6 +11,7 @@
 interface BarChartDataPoint {
     value: number;
     category: string;
+    color: string;
 }
 
 /**
@@ -51,12 +52,13 @@ module powerbi.extensibility.visual {
 
         let barChartDataPoints: BarChartDataPoint[] = [];
         let dataMax: number;
-
+        let colorPalette: IColorPalette = host.colorPalette;
 
         for (let i = 0, len = Math.max(category.values.length, dataValue.values.length); i < len; i++) {
             barChartDataPoints.push({
                 category: <string>category.values[i],
-                value: <number>dataValue.values[i]
+                value: <number>dataValue.values[i],
+                color: colorPalette.getColor(<string>category.values[i]).value
             });
         }
         dataMax = <number>dataValue.maxLocal;
@@ -152,7 +154,8 @@ module powerbi.extensibility.visual {
                 width: xScale.rangeBand(),
                 height: d => height - yScale(d.value),
                 y: d=> yScale(d.value),
-                x: d=> xScale(d.category)
+                x: d=> xScale(d.category),
+                fill: d => d.color
             });
 
             bars.exit().remove();
