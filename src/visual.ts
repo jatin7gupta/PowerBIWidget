@@ -1,5 +1,6 @@
 "use strict";
 
+
 /**
  * Interface for BarChart data points.
  *
@@ -28,6 +29,44 @@ interface BarChartViewModel {
 
 
 module powerbi.extensibility.visual {
+
+    function visualTransform(options: VisualUpdateOptions, host: IVisualHost): BarChartViewModel {
+        let dataViews = options.dataViews;
+        let viewModel: BarChartViewModel = {
+            dataPoints: [],
+            dataMax: 0
+        };
+
+        if(!dataViews
+            || !dataViews[0]
+            || !dataViews[0].categorical
+            || !dataViews[0].categorical.categories
+            || !dataViews[0].categorical.categories[0].source
+            || !dataViews[0].categorical.values)
+            return viewModel;
+
+        let categorical = dataViews[0].categorical;
+        let category = categorical.categories[0];
+        let dataValue = categorical.values[0];
+
+        let barChartDataPoints: BarChartDataPoint[] = [];
+        let dataMax: number;
+
+
+        for (let i = 0, len = Math.max(category.values.length, dataValue.values.length); i < len; i++) {
+            barChartDataPoints.push({
+                category: <string>category.values[i],
+                value: <number>dataValue.values[i]
+            });
+        }
+        dataMax = <number>dataValue.maxLocal;
+        return {
+            dataPoints: barChartDataPoints,
+            dataMax: dataMax
+        }
+    }
+
+
     export class Visual implements IVisual {
 
         private settings: VisualSettings;
@@ -87,32 +126,7 @@ module powerbi.extensibility.visual {
             //     this.textNode.textContent = (this.updateCount++).toString();
             // }
 
-            let testData: BarChartDataPoint[] = [
-                {
-                    value: 10,
-                    category: 'a'
-                },
-                {
-                    value: 20,
-                    category: 'b'
-                },
-                {
-                    value: 1,
-                    category: 'c'
-                },
-                {
-                    value: 100,
-                    category: 'd'
-                },
-                {
-                    value: 500,
-                    category: 'e'
-                }];
-
-            let viewModel: BarChartViewModel = {
-                dataPoints: testData,
-                dataMax: d3.max(testData.map((dataPoint) => dataPoint.value))
-            };
+            let viewModel: BarChartViewModel = visualTransform(options, this.host);
 
             let width = options.viewport.width;
             let height = options.viewport.height;
