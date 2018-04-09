@@ -1,35 +1,19 @@
 "use strict";
 
-
-/**
- * Interface for BarChart data points.
- *
- * @interface
- * @property {number} value    - Data value for point.
- * @property {string} category - Coresponding category of data value.
- */
-interface BarChartDataPoint {
-    value: number;
-    category: string;
-    color: string;
-}
-
-/**
- * Interface for BarCharts viewmodel.
- *
- * @interface
- * @property {BarChartDataPoint[]} dataPoints - Set of data points the visual will render.
- * @property {number} dataMax                 - Maximum data value in the set of data points.
- */
-interface BarChartViewModel {
-    dataPoints: BarChartDataPoint[];
-    dataMax: number;
-}
-
-
-
-
 module powerbi.extensibility.visual {
+    import ISelectionId = powerbi.visuals.ISelectionId;
+
+    interface BarChartDataPoint {
+        value: number;
+        category: string;
+        color: string;
+        selectionId: ISelectionId;
+    }
+
+    interface BarChartViewModel {
+        dataPoints: BarChartDataPoint[];
+        dataMax: number;
+    }
 
     function visualTransform(options: VisualUpdateOptions, host: IVisualHost): BarChartViewModel {
         let dataViews = options.dataViews;
@@ -58,7 +42,10 @@ module powerbi.extensibility.visual {
             barChartDataPoints.push({
                 category: <string>category.values[i],
                 value: <number>dataValue.values[i],
-                color: colorPalette.getColor(<string>category.values[i]).value
+                color: colorPalette.getColor(<string>category.values[i]).value,
+                selectionId: host.createSelectionIdBuilder()
+                    .withCategory(category, i)
+                    .createSelectionId()
             });
         }
         dataMax = <number>dataValue.maxLocal;
@@ -79,9 +66,12 @@ module powerbi.extensibility.visual {
         private  barChartContainer: d3.Selection<SVGAElement>;
         private barContainer: d3.Selection<SVGAElement>;
         private bars: d3.Selection<SVGAElement>;
+        private selectionManager: ISelectionManager;
 
         static Config ={
-            xScalePadding: 0.1
+            xScalePadding: 0.1,
+            solidOpacity: 1,
+            transparentOpacity: 0.5,
         };
 
 
@@ -113,7 +103,8 @@ module powerbi.extensibility.visual {
             // }
 
             this.host = options.host;
-            let svg = this.svg = d3.select(options.element)
+            this.selectionManager = options.host.createSelectionManager();
+                let svg = this.svg = d3.select(options.element)
                 .append('svg')
                 .classed('barChart', true);
             this.barContainer = svg.append('g')
@@ -155,10 +146,26 @@ module powerbi.extensibility.visual {
                 height: d => height - yScale(d.value),
                 y: d=> yScale(d.value),
                 x: d=> xScale(d.category),
-                fill: d => d.color
+                fill: d => d.color,
+                'fill-opacity': Visual.Config.solidOpacity
+            });
+            let selectionManager = this.selectionManager;
+            bars.on('click', function (d) {
+               selectionManager.select(d.selectionId).then((ids:ISelectionId[])=>{
+                   bars.attr({
+                       'fill-opacity':ids.length>0 ?
+                           Visual.Config.transparentOpacity:
+                           Visual.Config.solidOpacity
+                   });
+                   d3.select(this).attr({
+                       'fill-opacity': Visual.Config.solidOpacity
+                   });
+               });
+                (<Event>d3.event).stopPropagation
             });
 
-            bars.exit().remove();
+            bars.exit()
+                .remove();
 
         }
 
